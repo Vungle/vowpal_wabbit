@@ -6,6 +6,7 @@
 #include "../vowpalwabbit/search_hooktask.h"
 #include "../vowpalwabbit/parse_example.h"
 #include "../vowpalwabbit/gd.h"
+#include "../vowpalwabbit/parse_regressor.h"
 
 #include <boost/make_shared.hpp>
 #include <boost/python.hpp>
@@ -36,6 +37,16 @@ vw_ptr my_initialize(string args) {
 
 void my_finish(vw_ptr all) {
   VW::finish(*all, false);  // don't delete all because python will do that for us!
+}
+
+void my_drive(vw_ptr all) {
+    VW::start_parser(*all);
+    LEARNER::generic_driver(*all);
+    VW::end_parser(*all);
+}
+
+void my_save_predictor(vw_ptr all, string reg_name, size_t current_pass) {
+    save_predictor(*all, reg_name, current_pass);
 }
 
 search_ptr get_search_ptr(vw_ptr all) {
@@ -101,7 +112,14 @@ example_ptr my_read_example(vw_ptr all, size_t labelType, char*str) {
 }
 
 void my_finish_example(vw_ptr all, example_ptr ec) {
-  // TODO
+  label_data ld = ec->l.simple;
+
+  all->sd->update(ec->test_only, ec->loss, ld.weight, ec->num_features);
+  if (ld.label != FLT_MAX && !ec->test_only)
+    all->sd->weighted_labels += ld.label * ld.weight;
+  all->sd->weighted_unlabeled_examples += ld.label == FLT_MAX ? ld.weight : 0;
+
+  VW::finish_example(*all, ec.get());
 }
 
 void my_learn(vw_ptr all, example_ptr ec) {
@@ -112,6 +130,7 @@ float my_learn_string(vw_ptr all, char*str) {
   example*ec = VW::read_example(*all, str);
   all->learn(ec);
   float pp = ec->partial_prediction;
+  output_and_account_example(*all, *ec);
   VW::finish_example(*all, ec);
   return pp;
 }
@@ -460,6 +479,8 @@ BOOST_PYTHON_MODULE(pylibvw) {
       .def("__init__", py::make_constructor(my_initialize))
       //      .def("__del__", &my_finish, "deconstruct the VW object by calling finish")
       .def("finish", &my_finish, "stop VW by calling finish (and, eg, write weights to disk)")
+      .def("drive", &my_drive, "make VW run the parser")
+      .def("save", &my_save_predictor, "serialize the current model to a file")
       .def("learn", &my_learn, "given a pyvw example, learn (and predict) on that example")
       .def("learn_string", &my_learn_string, "given an example specified as a string (as in a VW data file), learn on that example")
       .def("hash_space", &VW::hash_space, "given a namespace (as a string), compute the hash of that namespace")

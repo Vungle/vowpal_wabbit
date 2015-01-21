@@ -70,6 +70,22 @@ class vw(pylibvw.vw):
                 ec.setup_example()
             pylibvw.vw.learn(self, ec)
 
+    def get_weighted_examples(self):
+        """Returns the weighted sum of examples seen so far."""
+        return pylibvw.vw.get_weighted_examples(self)
+
+    def get_sum_loss(self):
+        """Return the total loss experienced thus far."""
+        return pylibvw.vw.get_sum_loss(self)
+
+    def save(self, filename, pass_num=0):
+        """Serialize the current predictor to a file"""
+        pylibvw.vw.save(self, filename, pass_num)
+
+    def drive(self):
+        """"Make VW run its internal parser on the data supplied via options"""
+        pylibvw.vw.drive(self)
+
     def finish(self):
         """stop VW by calling finish (and, eg, write weights to disk)"""
         if not self.finished:
