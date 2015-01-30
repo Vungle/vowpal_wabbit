@@ -70,13 +70,17 @@ class vw(pylibvw.vw):
                 ec.setup_example()
             pylibvw.vw.learn(self, ec)
 
-    def get_weighted_examples(self):
+    def get_num_weighted_examples(self):
         """Returns the weighted sum of examples seen so far."""
         return pylibvw.vw.get_weighted_examples(self)
 
     def get_sum_loss(self):
         """Return the total loss experienced thus far."""
         return pylibvw.vw.get_sum_loss(self)
+
+    def get_progressive_validation_score(self):
+        """"Return the progressive validation score."""
+        return self.get_sum_loss()/self.get_num_weighted_examples()
 
     def save(self, filename, pass_num=0):
         """Serialize the current predictor to a file"""
