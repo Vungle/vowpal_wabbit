@@ -8,6 +8,7 @@
 #include "../vowpalwabbit/gd.h"
 #include "../vowpalwabbit/parse_regressor.h"
 
+#include <cfloat>
 #include <boost/make_shared.hpp>
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
