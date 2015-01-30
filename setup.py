@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 import os
-from setuptools import setup
+from setuptools import setup, Extension
 from setuptools.command.install import install
+from setuptools.command.build_ext import build_ext
 from distutils.command.build import build
 from subprocess import call
 from multiprocessing import cpu_count
@@ -10,55 +11,25 @@ from multiprocessing import cpu_count
 BASEPATH = os.path.dirname(os.path.abspath(__file__))
 
 
-class build_pyvw(build):
+class build_pyvw(build_ext):
     def run(self):
-        # run original build code
-        build.run(self)
-
-        build_path = os.path.abspath(self.build_temp)
-
         cmd = [
             'make',
             'python'
         ]
 
-        def compile():
-            print '*' * 80
-            call(cmd, cwd=BASEPATH)
-            print '*' * 80
-
-        self.execute(compile, [], 'compiling pyvw')
-
-        # copy resulting tool to library build folder
-        self.mkpath(self.build_lib)
-
-        if not self.dry_run:
-            for target in ['python/pylibvw.so', 'python/pyvw.py']:
-                self.copy_file(target, self.build_lib)
-
-
-class install_pyvw(install):
-    def run(self):
-        # run original install code
-        install.run(self)
-
-        # install XCSoar executables
-        print 'running install_pyvw'
-        self.copy_tree(self.build_lib, self.install_lib)
-
-
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+        call(cmd, cwd=BASEPATH)
+        self.copy_file('python/pylibvw.so', self.get_ext_fullpath("pylibvw"))
 
 
 setup(
     name='pyvw',
-    version='0.4.1',
+    version='0.0.1',
     description='Python bindings for VW',
     maintainer='Vladimir Magdin',
-
+    ext_modules = [Extension('pylibvw', sources=[])],
+    py_modules = ['python/pyvw'],
     cmdclass={
-        'build': build_pyvw,
-        'install': install_pyvw,
+        'build_ext': build_pyvw
     }
 )
