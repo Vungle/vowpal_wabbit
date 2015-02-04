@@ -1,0 +1,2 @@
+recursive-include python pylibvw.cc pyvw.py Makefile
+global-include *h *cc *cpp Makefile* configure*
